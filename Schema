@@ -1,0 +1,36 @@
+Schema
+------
+
+saved_wallets
+{
+	userId,
+	walletId,
+	wallet_username,
+	wallet_password
+}
+
+merch_cust_details
+{
+	user_id,
+	merchant_id,
+	username
+}
+
+merchant_details 
+{
+	merch_id,
+	merch_code,
+	offers [ {
+		wallet_id,
+		offer_type,
+		offer_perc
+	}]
+}
+
+wallet_details {
+	wallet_id,
+	wallet_name,
+	service_url,
+	service_key,
+	service_password
+}

@@ -6,6 +6,7 @@ var mongodb = require('mongodb');
 var mongoose = require('mongoose');
 var assert = require('assert');
 var url = 'mongodb://localhost:27017/appdb';
+var serialNum = 1;
 
 mongoose.connect(url, function (error) {
     if (error) {
@@ -55,134 +56,21 @@ var SavedWalletSchema = new Schema({
 
 var SavedWallet = mongoose.model('saved_wallets', SavedWalletSchema);
 
-/*var db = mongoose.createConnection(url);
-db.once('open', function(err){
-    if(err){
-        console.log(err);
-    } else{
-        console.log('Connected to mongodb!');
-    }
-});
-*/
-/*var Db = mongodb.Db;
-var Server = mongodb.Server;
-
-var db = new Db('appdb', new Server("127.0.0.1", 27017, {auto_reconnect: false, poolSize: 4}));
-db.open(function(err, db) {
-    if(err!=null) {
-        console.log("Connection opened!");
-    }
-    console.log("Ok: ", db);
-});
-*/
-server.listen(3001);
-
-var merchantWallets=[];
-var merchantUser=[];
-
-//merchantDetails:
-//wallets supported;
-//users supported;
-//user Details when user will make a separate call;
-//when ever a new user comes we will add it into merchant array;
-
-//UserDetails;
-//saved wallets;
-
-
-//walletDetails;
-//discount offered;
-
-//userWalletDetails;
-//encrptedUsername;
-//encrptedPassword;
-
-
-//information while making call on pressing continute checkout : "merchant", "user"
-// now we need to populate the UI : UI only needs how many saved wallets does the person has if at all 
-// and how many wallets does the merchant support;
-
-
-//how to add a new merchant ?
-// merchant name, wallets that merchant support;
-
-/*
-mongoose.connect('mongodb://localhost/chat', function(err){
-    if(err){
-        console.log(err);
-    } else{
-        console.log('Connected to mongodb!');
-    }
-});
-var chatSchema = new mongoose.Schema({
-    nick: String,
-    msg: String,
-    created: {type: Date, default: Date.now}
-});
-var Chat = mongoose.model('Message', chatSchema);
-app.get('/', function(req, res){
-
-
-    var value="";
-   var newMsg= new Chat({msg:"msg",nick:"name"});
-    
-  
-    Chat.remove({}, function(err) {
-    if (!err) {
-           console.log("done");
-    }
-    else {
-           console.log("error");
-    }
-});
-
-  
-
-    newMsg.save(function(err){
-    if (err) 
-        throw err;
-    else{
-        console.log("saved");
-    }
-     });    
-
-    Chat.find({},function(err,docs){
-
-
-
-        value="jhnbjhbjhhjb";
-        if (err) {
-            console.log("err");
-            value=" fjfvjrfkvjfkjvkrekhrejbrvrenv";
-        }
-
-   
-        else{
-             for(var k=0;k<docs.length;k++){
-                value+=docs[k];
-                value+="</b>";
-             }
-             value+="koooooo";
-             res.json(docs);
-             //JSON.stringify(docs)+"hi"+
-             //res.send("hi"+ value);
-        }
-    }  );*/
-
-
 var bodyParser = require('body-parser'); 
 app.use(bodyParser.json());
 var jsonParser = bodyParser.json();
 
-//console.log(getSavedWallets(db, "amazon", "taste"));
+server.listen(3001);
 
+//URL-MAPPINGS
 app.get('/getSavedWallets', jsonParser, function (req, res) {
     
     //Saved Wallets:
     var merch_id;
     var username = req.body.username;
     var merchant_code = req.body.merchant_code;
-    merchant_code = "amazon";
+    //merchant_code = "amazon";
+    //username = "eshwar.more";
     if (!!merchant_code) {
 
 
@@ -196,8 +84,8 @@ app.get('/getSavedWallets', jsonParser, function (req, res) {
 
 
             MerchCustDetail.find({ merchant_id: merch_id, username: username }, function (err, doc) {
-                user_id = doc.user_id;
-                console.log("user id:" + doc);
+                user_id = doc[0].user_id;
+                console.log("user id:" + user_id);
                 var wallet_ids = [];
             if(!!user_id) {
 
@@ -205,14 +93,18 @@ app.get('/getSavedWallets', jsonParser, function (req, res) {
                 SavedWallet.find({ user_id: user_id }, function (err, docs) {
                     docs.forEach(function(doc) {
                         wallet_ids.push(doc.wallet_id);
+                        console.log('wid'+ doc.wallet_id);
                     });
 
                 if(wallet_ids != null && wallet_ids.length > 0) {
                 wallet_ids.forEach(function(wallet_id) {
-                    Wallet.find({ wallet_id : wallet_id }, function (err, docs) {
+
+                    Merchant.find({ 'merchant_offer.wallet_id' : wallet_id }, function (err, docs) {
                         //res.json(docs);
-                        res.add(docs);
-                        console.log(docs);
+                        //res.add(docs);
+                        console.log('hello' + docs);
+                        res.json(wallet_ids);
+                        return;
                     });    
                 });
             }
@@ -221,62 +113,35 @@ app.get('/getSavedWallets', jsonParser, function (req, res) {
             }else{
                 console.log("first time user");
             }
-
-
-
-
-
-
             });
         }
         else{
             console.log('Invalid merchant!');
-        return res.json;
         }
-
-
-        
-
-
         });
-
-
-
-
 }
-        
     else {
         console.log('No merchant exists!');
-        return res;
+        
     }
-    return res;
+   
 });
 
-app.get('/getUnsavedWallets', function (req, res) {
+app.post('/getUnsavedWallets', function (req, res) {
 
     req_merchant_code = req.body.merchant_code;
-    req_username = req.body.username;
-
-    if(req_username != null) {
-        var user_id;
-        MerchCustDetail.find({ username: req_username }, function (err, doc) {
-            user_id = doc.user_id;
-        });
-        if(user_id != null) {
-
-        }
-    }
-
+    //req_merchant_code = "amazon";
     //ON HOLD
 
-    if(req_username!=null && req_merchant_code!=null) {
+    if(req_merchant_code!=null) {
         Merchant.find({merchant_code: req_merchant_code}, function (err, docs) {
-            merchan
-        })
+            console.log(docs);
+            res.json(docs);
+        });
     }
 });
 
-app.post('/', jsonParser, function (req, res) {
+app.get('/makePayment', jsonParser, function (req, res) {
 
     var req_merchant_code = req.body.merchant_code;
     var req_username = req.body.username;
@@ -284,47 +149,74 @@ app.post('/', jsonParser, function (req, res) {
     var wallet_username = req.body.wallet_username;
     var wallet_password = req.body.wallet_password;
 
+    req_merchant_code = "amazon";
+    req_username = "eshwar.more";
+    wallet_id = 1;
+    wallet_username = "shyam";
+    wallet_password = "shyam";
+
     var merchant_id;
-    if(merchant_code != null && req_username != null) {
-        Merchant.find({ merchant_code: merchant_code }, function (err, doc) {
-            merchant_id = doc.merchant_id;
-        });
+    if(req_merchant_code != null && req_username != null)
+    {
+        console.log('merchnt id' + req_merchant_code + 'username' + req_username);
+        Merchant.find({ merchant_code: req_merchant_code }, function (err, doc) {
+        merchant_id = doc[0].merchant_id;
         var user_id;
-        if(merchant_id != null) {
-            MerchCustDetail.find( { merchant_id : merchant_id, username : username }, function (err, doc) {
-                user_id = doc.user_id;
-            });
-            if(user_id != null && wallet_id!=null && wallet_username != null && wallet_password != null) {
-                var saveWallet = new SavedWallet({
-                    user_id: user_id,
-                    wallet_id: wallet_id,
-                    wallet_username: wallet_username,
-                    wallet_password: wallet_password
-                });
+        if(merchant_id != null)        
+        {
+            console.log('mer id' + merchant_id);
+            
+                user_id = serialNum;
+                serialNum++;
+                console.log(user_id);
+      
+                if(user_id != null && wallet_id!=null && wallet_username != null && wallet_password != null) 
+                {
+                    var saveWallet = new SavedWallet({
+                        user_id: user_id,
+                        wallet_id: wallet_id,
+                        wallet_username: wallet_username,
+                        wallet_password: wallet_password
+                    });
 
-                saveWallet.save(function(err, saveWallet) {
-                    if (err) {
-                        return console.error(err);
-                    }                         
-                    console.dir(saveWallet);
-                });
-            }
+                    var merchCust = new MerchCustDetail({
+                        user_id : user_id,
+                        merchant_id : merchant_id,
+                        username : req_username
+
+                    });
+
+                    saveWallet.save(function(err, saveWallet) {
+                        if (err) {
+                            return console.error(err);
+                        }                         
+                        console.dir(saveWallet);
+                    });
+
+                    merchCust.save(function(err, merchCust) {
+                        if (err) {
+                            return console.error(err);
+                        }                         
+                        console.dir(merchCust);
+                    });
+                }
         }
-    }
+    });
+}
+
+});
+app.post('/makePaymentFromSavedWallet', jsonParser, function (req, res) {
+
+    var req_merchant_code = req.body.merchant_code;
+    var req_username = req.body.username;
+    var wallet_id = req.body.wallet_id;
+
+    //Retrieve MOCK
+
+    res.send();
+
 });
 
-/*
-app.get('/getWallets', jsonParser, function (req, res) {
-
-    var merchant=req.body.merchant_code;
-    var username=req.body.customer_username;
-    //var amount=req.body.amount;
-    var savedWallets = getSavedWallets(db, merchant,username);
-    var notSavedWallets = getNotSavedWallets(db, merchant,username);
-
-    res.send({"savedWallets":savedWallets,"notSavedWallets":notSavedWallets});
-});
-*/
 function getSavedWallets(db, merchant_code, username){
     var obj = [];
 
@@ -378,13 +270,9 @@ function  getNotSavedWallets( a,  b){
     return json;
 }
 
-
 function getWalletsWhichMerchantSupports(merchant){
     return "jfhvkjfh";
 }
-
-
-
 
 app.post('/makePaymentFromSavedWallet', jsonParser, function (req, res) {
 
@@ -414,7 +302,6 @@ var savedWallet =req.body.walletId;
 var walletDetails = req.body.walletDetails;
 var isChecked = req.body.isChecked;
 
-
 var walletDetails= getSavedWalletDetails(merchant,username,savedWallet.id);
 var payMentSucessful;
 
@@ -423,35 +310,8 @@ if(amount<=0)
 else
 payMentSucessful = makePayment(merchant,username,walletDetails);
 
-
 if(payMentSucessful){
     saveWalletDetails(merchant,user,walletId,walletDetails);
 }
-//wallet.hitapi
 
 });
-
-//wallets and call the apis of wallets internally; 
-//app.post('/')
-
-
-//var MongoClient = require('mongodb').MongoClient;
-//var io = require('socket.io').listen(server);
-
-/*usernames["ank"]="pass";
-
-
-server.listen(3000);
-*/
-/*
-io.sockets.on('connection', function(socket){
-    console.log("connected");
-});
-
-*/
-
-
- 
-
-
-//*/
