@@ -180,39 +180,138 @@ app.get('/getSavedWallets', jsonParser, function (req, res) {
     
     //Saved Wallets:
     var merch_id;
-    if (req.body.merchant_code) {
-        Merchant.find({ merchant_code: "amazon" }, function (err, doc) {
-           merch_id = doc.merchant_id;
-        });
-        var user_id;
-        if(merch_id) {
-            MerchCustDetail.find({ merchant_id: merch_id }, function (err, doc) {
+    var username = req.body.username;
+    var merchant_code = req.body.merchant_code;
+    merchant_code = "amazon";
+    if (!!merchant_code) {
+
+
+        Merchant.find({ merchant_code: merchant_code }, function (err, doc) {
+           console.log("am here");
+           console.log(doc);
+           merch_id = doc[0].merchant_id;
+           console.log('Merchant Id: ' + merch_id);
+           var user_id;
+        if(!!merch_id) {
+
+
+            MerchCustDetail.find({ merchant_id: merch_id, username: username }, function (err, doc) {
                 user_id = doc.user_id;
-            });
-            var wallet_ids = [];
-            if(user_id) {
+                console.log("user id:" + doc);
+                var wallet_ids = [];
+            if(!!user_id) {
+
+
                 SavedWallet.find({ user_id: user_id }, function (err, docs) {
                     docs.forEach(function(doc) {
                         wallet_ids.push(doc.wallet_id);
                     });
-                });
-            }
 
-            if(wallet_ids != null && wallet_ids.length > 0) {
+                if(wallet_ids != null && wallet_ids.length > 0) {
                 wallet_ids.forEach(function(wallet_id) {
                     Wallet.find({ wallet_id : wallet_id }, function (err, docs) {
-                        res.json(docs);
+                        //res.json(docs);
+                        res.add(docs);
+                        console.log(docs);
                     });    
+                });
+            }
+                });
+            
+            }else{
+                console.log("first time user");
+            }
+
+
+
+
+
+
+            });
+        }
+        else{
+            console.log('Invalid merchant!');
+        return res.json;
+        }
+
+
+        
+
+
+        });
+
+
+
+
+}
+        
+    else {
+        console.log('No merchant exists!');
+        return res;
+    }
+    return res;
+});
+
+app.get('/getUnsavedWallets', function (req, res) {
+
+    req_merchant_code = req.body.merchant_code;
+    req_username = req.body.username;
+
+    if(req_username != null) {
+        var user_id;
+        MerchCustDetail.find({ username: req_username }, function (err, doc) {
+            user_id = doc.user_id;
+        });
+        if(user_id != null) {
+
+        }
+    }
+
+    //ON HOLD
+
+    if(req_username!=null && req_merchant_code!=null) {
+        Merchant.find({merchant_code: req_merchant_code}, function (err, docs) {
+            merchan
+        })
+    }
+});
+
+app.post('/', jsonParser, function (req, res) {
+
+    var req_merchant_code = req.body.merchant_code;
+    var req_username = req.body.username;
+    var wallet_id = req.body.wallet_id;
+    var wallet_username = req.body.wallet_username;
+    var wallet_password = req.body.wallet_password;
+
+    var merchant_id;
+    if(merchant_code != null && req_username != null) {
+        Merchant.find({ merchant_code: merchant_code }, function (err, doc) {
+            merchant_id = doc.merchant_id;
+        });
+        var user_id;
+        if(merchant_id != null) {
+            MerchCustDetail.find( { merchant_id : merchant_id, username : username }, function (err, doc) {
+                user_id = doc.user_id;
+            });
+            if(user_id != null && wallet_id!=null && wallet_username != null && wallet_password != null) {
+                var saveWallet = new SavedWallet({
+                    user_id: user_id,
+                    wallet_id: wallet_id,
+                    wallet_username: wallet_username,
+                    wallet_password: wallet_password
+                });
+
+                saveWallet.save(function(err, saveWallet) {
+                    if (err) {
+                        return console.error(err);
+                    }                         
+                    console.dir(saveWallet);
                 });
             }
         }
     }
-    else {
-        console.log('No merchant exists!');
-    }
 });
-
-
 
 /*
 app.get('/getWallets', jsonParser, function (req, res) {
